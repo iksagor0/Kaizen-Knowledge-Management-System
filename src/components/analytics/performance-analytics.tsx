@@ -1,11 +1,54 @@
-import { IPerformanceAnalyticsProps } from "@/types/analytics.types";
 import { BarChart2, RefreshCw } from "lucide-react";
-import React from "react";
+import React, { useMemo } from "react";
+
+import {
+  IFormattedDuration,
+  IPerformanceAnalyticsProps,
+} from "@/types/analytics.types";
+import { formatDuration } from "@/utils";
+import { HOUR_UNIT, MINUTE_UNIT_LONG, MINUTE_UNIT_SHORT } from "@/constants";
 
 const PerformanceAnalytics: React.FC<IPerformanceAnalyticsProps> = ({
   mounted,
   stats,
 }) => {
+  const formattedDailyAvg = useMemo(
+    () => formatDuration(stats.overallAvg),
+    [stats.overallAvg],
+  );
+
+  const formattedMonthTotal = useMemo(
+    () => formatDuration(stats.rolling30Total),
+    [stats.rolling30Total],
+  );
+
+  const formattedWeekTotal = useMemo(
+    () => formatDuration(stats.rolling7Total),
+    [stats.rolling7Total],
+  );
+
+  const _renderFormattedDuration = (duration: IFormattedDuration) => {
+    return (
+      <span className="text-sm font-bold text-heading_color">
+        {duration.hasHours && (
+          <>
+            <span>{duration.hours}</span>
+            <span className="text-disable_color font-normal">{HOUR_UNIT}</span>
+            {duration.hasMinutes && " "}
+          </>
+        )}
+        {duration.hasMinutes && (
+          <>
+            <span className="ml-1">{duration.minutes}</span>
+            <span className="text-disable_color font-normal">
+              {duration.hasHours ? MINUTE_UNIT_SHORT : MINUTE_UNIT_LONG}
+            </span>
+          </>
+        )}
+      </span>
+    );
+  };
+
   return (
     <div className="bg-base_color/50 backdrop-blur-xl rounded-3xl p-6 border border-border_color shadow-xl shadow-base_color/10">
       <h2 className="text-lg font-display font-bold text-heading_color mb-5 flex items-center">
@@ -20,10 +63,7 @@ const PerformanceAnalytics: React.FC<IPerformanceAnalyticsProps> = ({
             <span className="text-sm font-semibold text-heading_color_secondary">
               Daily Average
             </span>
-            <span className="text-sm font-bold text-heading_color">
-              <span>{stats.overallAvg}</span>{" "}
-              <span className="text-disable_color font-normal">min</span>
-            </span>
+            {_renderFormattedDuration(formattedDailyAvg)}
           </div>
           <div className="w-full bg-border_color/30 h-2 rounded-full overflow-hidden">
             <div
@@ -39,10 +79,7 @@ const PerformanceAnalytics: React.FC<IPerformanceAnalyticsProps> = ({
             <span className="text-sm font-semibold text-heading_color_secondary">
               This Week Total
             </span>
-            <span className="text-sm font-bold text-heading_color">
-              <span>{stats.rolling7Total}</span>{" "}
-              <span className="text-disable_color font-normal">min</span>
-            </span>
+            {_renderFormattedDuration(formattedWeekTotal)}
           </div>
           <div className="w-full bg-border_color/30 h-2 rounded-full overflow-hidden">
             <div
@@ -58,10 +95,7 @@ const PerformanceAnalytics: React.FC<IPerformanceAnalyticsProps> = ({
             <span className="text-sm font-semibold text-heading_color_secondary">
               This Month Total
             </span>
-            <span className="text-sm font-bold text-heading_color">
-              <span>{stats.rolling30Total}</span>{" "}
-              <span className="text-disable_color font-normal">min</span>
-            </span>
+            {_renderFormattedDuration(formattedMonthTotal)}
           </div>
           <div className="w-full bg-border_color/30 h-2 rounded-full overflow-hidden">
             <div

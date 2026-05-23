@@ -95,3 +95,10 @@ export const ACHIEVEMENTS: readonly IAchievementDef[] = [
     check: (stats) => stats.monthlyTime >= 5000,
   },
 ];
+
+export const MINUTES_IN_HOUR = 60;
+export const ZERO_VALUE = 0;
+
+export const HOUR_UNIT = "h";
+export const MINUTE_UNIT_SHORT = "m";
+export const MINUTE_UNIT_LONG = "min";
