@@ -1,50 +1,30 @@
 "use client";
 
-import { ACHIEVEMENTS, IAchievementDef } from "@/constants";
-import { useAppContext } from "@/context/app-context";
-import { getBDTime, getEffectiveBDDateStr } from "@/utils/time";
 import confetti from "canvas-confetti";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { ACHIEVEMENTS, IAchievementDef } from "@/constants";
+import { useAppContext } from "@/context/app-context";
+import { IStats } from "@/models";
+import { getEffectiveBDDateStr } from "@/utils/time";
+
+import { useAnalyticsStats } from "./use-analytics-stats";
+
 export const useAchievements = () => {
+  const analyticsStats = useAnalyticsStats();
   const { state } = useAppContext();
   const [activeToast, setActiveToast] = useState<IAchievementDef | null>(null);
   const shownRef = useRef<Set<string>>(new Set());
 
-  const stats = useMemo(() => {
-    const totalTasks = state.tasks.length;
-    const doneTasks = state.tasks.filter((t) => t.status === "DONE");
-    const completedCount = doneTasks.length;
-    let todayTime = 0;
-    doneTasks.forEach((t) => (todayTime += Number(t.actualTime) || 0));
-
-    const currentEffectiveDate = getEffectiveBDDateStr();
-    const bdTime = getBDTime();
-    if (bdTime.getHours() < 6) bdTime.setDate(bdTime.getDate() - 1);
-    const todayObj = new Date(currentEffectiveDate);
-
-    let weeklyTime = todayTime;
-    let monthlyTime = todayTime;
-
-    state.history.forEach((record) => {
-      const recTimeSpent = Number(record.timeSpent ?? record.totalTime) || 0;
-      const recDateStr = record.date || record.dateKey;
-      if (!recDateStr) return;
-      const recDate = new Date(recDateStr);
-      const diffTime = Math.abs(todayObj.getTime() - recDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      if (diffDays <= 7) weeklyTime += recTimeSpent;
-      if (diffDays <= 30) monthlyTime += recTimeSpent;
-    });
-
+  const achievementStats = useMemo<IStats>(() => {
     return {
-      todayTime: todayTime || 0,
-      todayCompleted: completedCount || 0,
-      todayTotal: totalTasks || 0,
-      weeklyTime: weeklyTime || 0,
-      monthlyTime: monthlyTime || 0,
+      todayTime: analyticsStats.todayTime,
+      todayCompleted: analyticsStats.completedCount,
+      todayTotal: analyticsStats.totalTasks,
+      weeklyTime: analyticsStats.rolling7Total,
+      monthlyTime: analyticsStats.rolling30Total,
     };
-  }, [state.tasks, state.history]);
+  }, [analyticsStats]);
 
   // Restore localStorage shown state
   useEffect(() => {
@@ -78,7 +58,7 @@ export const useAchievements = () => {
 
       if (shownRef.current.has(trackingKey)) continue;
 
-      if (achievement.check(stats)) {
+      if (achievement.check(achievementStats)) {
         shownRef.current.add(trackingKey);
         try {
           localStorage.setItem(
@@ -93,7 +73,7 @@ export const useAchievements = () => {
         break; // Show one at a time per render
       }
     }
-  }, [stats, state.isLoaded]);
+  }, [achievementStats, state.isLoaded]);
 
   return { activeToast };
 };
