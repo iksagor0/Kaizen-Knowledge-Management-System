@@ -27,3 +27,10 @@ export interface IPerformanceAnalyticsProps {
 export interface ILifetimeMilestonesProps {
   readonly stats: IAnalyticsStats;
 }
+
+export interface IFormattedDuration {
+  readonly hours: number;
+  readonly minutes: number;
+  readonly hasHours: boolean;
+  readonly hasMinutes: boolean;
+}
