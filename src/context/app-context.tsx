@@ -76,7 +76,10 @@ type TAppAction =
   | { type: "ADD_RESOURCE"; payload: IResource }
   | { type: "UPDATE_RESOURCE"; payload: IResource }
   | { type: "DELETE_RESOURCE"; payload: string }
-  | { type: "REORDER_RESOURCES"; payload: { sourceId: string; targetId: string } }
+  | {
+      type: "REORDER_RESOURCES";
+      payload: { sourceId: string; targetId: string };
+    }
   | { type: "TOGGLE_ARCHIVE_RESOURCE"; payload: string }
   | { type: "SET_ACTIVE_TAB"; payload: EActiveTab };
 
@@ -177,10 +180,21 @@ function appReducer(state: IAppState, action: TAppAction): IAppState {
 
       const newHistory = [...state.history];
       if (state.tasks.length > 0 && state.lastResetTime) {
-        const totalTime = state.tasks.reduce(
-          (sum, t) => sum + (t.status === "DONE" ? t.actualTime || 0 : 0),
-          0,
-        );
+        const totalTime = state.tasks.reduce((sum, t) => {
+          if (t.status === "DONE") {
+            if (t.completedAt) {
+              if (
+                getEffectiveBDDateStr(t.completedAt) === state.lastResetTime
+              ) {
+                return sum + (t.actualTime || 0);
+              }
+            } else if (t.repeatDaily) {
+              // Legacy fallback: repeatDaily without completedAt
+              return sum + (t.actualTime || 0);
+            }
+          }
+          return sum;
+        }, 0);
         newHistory.push({
           date: state.lastResetTime,
           timeSpent: totalTime,
@@ -232,21 +246,21 @@ function appReducer(state: IAppState, action: TAppAction): IAppState {
         ...state,
         notes: state.notes.filter((n) => n.id !== action.payload),
       };
- 
+
     case "REORDER_NOTES": {
       const { sourceId, targetId } = action.payload;
       const notes = [...state.notes];
       const sourceIndex = notes.findIndex((n) => n.id === sourceId);
       const targetIndex = notes.findIndex((n) => n.id === targetId);
- 
+
       if (sourceIndex === -1 || targetIndex === -1) return state;
- 
+
       const [movedNote] = notes.splice(sourceIndex, 1);
       notes.splice(targetIndex, 0, movedNote);
- 
+
       return { ...state, notes };
     }
- 
+
     case "TOGGLE_NOTE_PIN":
       return {
         ...state,
