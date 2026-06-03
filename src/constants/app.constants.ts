@@ -1,6 +1,6 @@
 export const APP_SHORT_NAME = "Kaizen";
 export const APP_NAME = "Kaizen: Knowledge Management System";
-export const APP_VERSION = "4.5.0";
+export const APP_VERSION = "4.5.1";
 export const APP_DESCRIPTION =
   "Build consistency. Track progress. Achieve mastery.";
 
